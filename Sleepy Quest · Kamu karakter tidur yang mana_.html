@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sleepy Quest · Kamu karakter tidur yang mana?</title>
+<meta name="description" content="Kuis 10 soal untuk menemukan karakter tidurmu dan isi kamar yang kamu butuhkan.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Noto+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<!--
+  ANALYTICS (opsional, gratis): tempel kode Microsoft Clarity di sini.
+  Daftar di clarity.microsoft.com, buat project, salin <script> yang diberikan, tempel di bawah baris ini.
+  Event yang dikirim app ini: mulai, soal_1..soal_10, kuis_selesai, quest_dibuka, harta_ketemu, quest_tamat
+  + tag "karakter" berisi hasil kuis.
+-->
+<style>
+  :root{
+    --navy:#0B1F4B; --blue:#0058A3; --yellow:#FFDB00; --paper:#FAFBFD; --sky:#E9F2FB;
+    --ink:#1B2233; --soft:#4A5568; --line:#C9D6E6;
+    --orange:#FF9A55; --lav:#B3A2FF; --mint:#6ED3AF; --pink:#FF9CC6; --skyb:#8EC5FF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Noto Sans',Verdana,system-ui,sans-serif;background:#DCE6F3;color:var(--ink);-webkit-font-smoothing:antialiased}
+  .app{max-width:460px;min-height:100%;margin:0 auto;background:var(--paper);position:relative;overflow:hidden;display:flex;flex-direction:column}
+  @media (min-width:600px){ .app{min-height:auto;margin:24px auto;border-radius:28px;box-shadow:0 20px 60px rgba(11,31,75,.25)} }
+  .screen{display:none;flex:1;flex-direction:column;padding:28px 22px 32px;animation:in .35s ease both}
+  .screen.on{display:flex}
+  @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  h1,h2,h3{line-height:1.12}
+  .hand{font-family:'Caveat','Brush Script MT',cursive;font-weight:700}
+  .eyebrow{display:inline-block;align-self:flex-start;background:var(--blue);color:#fff;font-size:12px;font-weight:800;letter-spacing:2px;padding:5px 12px}
+  .btn{appearance:none;border:0;cursor:pointer;font:inherit;font-weight:800;font-size:17px;border-radius:999px;padding:16px 22px;width:100%;transition:transform .1s ease, opacity .2s}
+  .btn:active{transform:scale(.97)}
+  .btn.primary{background:var(--blue);color:#fff}
+  .btn.yellow{background:var(--yellow);color:var(--navy)}
+  .btn.ghost{background:transparent;color:var(--blue);border:2px solid var(--line)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .sticky{background:var(--yellow);padding:14px 18px;box-shadow:0 8px 20px rgba(11,31,75,.2);transform:rotate(-2deg);font-size:26px;line-height:1.05;color:var(--ink)}
+
+  /* START */
+  #start{background:var(--navy);color:#fff;justify-content:space-between;position:relative}
+  #start .sky{position:absolute;inset:0;pointer-events:none}
+  #start .top{position:relative;display:flex;flex-direction:column;gap:18px;margin-top:40px}
+  #start .eyebrow{background:var(--yellow);color:var(--navy)}
+  #start h1{font-size:56px;font-weight:800}
+  #start p.lead{font-size:17px;line-height:1.45;color:#DCE6F7;max-width:330px}
+  #start .chars{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  #start .chars span{font-size:13px;font-weight:600;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:6px 10px;border-radius:999px}
+  #start .bottom{position:relative;display:flex;flex-direction:column;gap:16px;align-items:stretch}
+  #start .sticky{align-self:center;margin-bottom:8px}
+  #start .meta{font-size:13px;color:#9FB3D9;text-align:center}
+
+  /* QUIZ */
+  .qhead{display:flex;align-items:center;gap:12px}
+  .back{appearance:none;border:0;background:var(--sky);width:40px;height:40px;border-radius:50%;font-size:20px;color:var(--blue);cursor:pointer;flex:none}
+  .bar{flex:1;height:10px;background:var(--sky);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--yellow);border-radius:99px;transition:width .35s ease}
+  .count{font-size:13px;font-weight:800;color:var(--soft);min-width:40px;text-align:right}
+  .qtext{font-size:25px;font-weight:800;margin:26px 0 6px}
+  .hint{font-size:14px;color:var(--soft);margin-bottom:18px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .opt{appearance:none;border:2px solid var(--line);background:#fff;border-radius:18px;padding:14px 12px;text-align:left;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:92px;transition:all .15s ease;position:relative}
+  .opt .e{font-size:26px;line-height:1}
+  .opt .ot{font-size:14px;font-weight:600;line-height:1.25;color:var(--ink)}
+  .opt[aria-pressed="true"]{border-color:var(--blue);background:var(--yellow);box-shadow:0 6px 14px rgba(0,88,163,.18);transform:translateY(-2px)}
+  .opt[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .qfoot{margin-top:auto;padding-top:22px}
+
+  /* RESULT */
+  #result{gap:18px}
+  .rcard{border-radius:24px;padding:22px;position:relative;overflow:hidden}
+  .rcard .lbl{font-size:12px;font-weight:800;letter-spacing:2px;color:rgba(11,31,75,.7)}
+  .rcard h2{font-size:42px;font-weight:800;color:var(--navy);margin:4px 0 6px}
+  .rcard .mix{font-size:15px;font-weight:600;color:var(--navy)}
+  .rcard .desc{font-size:15px;line-height:1.45;color:var(--ink);margin-top:10px;max-width:300px}
+  .rcard .badge{position:absolute;right:-6px;top:-6px;font-size:84px;opacity:.9;transform:rotate(10deg)}
+  .sec-t{font-size:13px;font-weight:800;letter-spacing:2px;color:var(--blue)}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{display:flex;gap:12px;align-items:flex-start;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px 14px}
+  .item .ic{font-size:22px;width:40px;height:40px;border-radius:12px;background:var(--sky);display:flex;align-items:center;justify-content:center;flex:none}
+  .item b{font-size:15px;display:block}
+  .item small{font-size:13px;color:var(--soft);display:block;margin-top:2px;line-height:1.35}
+  .note{font-size:12px;color:var(--soft);line-height:1.4}
+  .row2{display:flex;gap:10px}
+
+  /* MAP MODAL */
+  .modal{position:fixed;inset:0;background:rgba(11,31,75,.7);display:none;align-items:flex-end;justify-content:center;z-index:20}
+  .modal.on{display:flex;animation:fade .25s ease both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .sheet{width:100%;max-width:460px;max-height:94vh;overflow:auto;background:#F6EBD2;border-radius:26px 26px 0 0;padding:20px 18px 26px;animation:up .35s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+  .sheet .shead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .sheet h3{font-family:'Caveat','Brush Script MT',cursive;font-size:38px;color:#5A3A12}
+  .x{appearance:none;border:0;background:#E7D3A8;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;color:#5A3A12}
+  .map{width:100%;height:auto;display:block;border-radius:16px;border:3px solid #C9A86A;background:#F3E2BC}
+  .prog{display:flex;align-items:center;gap:10px;margin:14px 0 10px;font-weight:800;color:#5A3A12;font-size:14px}
+  .prog .bar{background:#E7D3A8}
+  .tlist{display:flex;flex-direction:column;gap:8px}
+  .t{display:flex;align-items:center;gap:12px;background:#FFF8E8;border:2px dashed #C9A86A;border-radius:14px;padding:10px 12px}
+  .t .n{width:30px;height:30px;border-radius:50%;background:#B23A2B;color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;flex:none}
+  .t .tx{flex:1}
+  .t .tx b{font-size:14px;display:block;color:#3A250B}
+  .t .tx small{font-size:12px;color:#7A5A2A}
+  .t .got{appearance:none;border:2px solid #B23A2B;background:#fff;color:#B23A2B;font:inherit;font-weight:800;font-size:12px;border-radius:999px;padding:8px 10px;cursor:pointer;white-space:nowrap}
+  .t.done{border-style:solid;border-color:#3E8E5E;background:#E9F7EE}
+  .t.done .n{background:#3E8E5E}
+  .t.done .got{background:#3E8E5E;border-color:#3E8E5E;color:#fff}
+  .disc{font-size:11px;color:#7A5A2A;margin-top:10px;line-height:1.4}
+
+  /* WIN */
+  #win{background:var(--navy);color:#fff;align-items:center;text-align:center;gap:16px;position:relative;padding-top:36px}
+  #win .card{width:100%;background:#fff;color:var(--ink);border-radius:22px;padding:18px;text-align:left;display:flex;flex-direction:column;gap:10px;position:relative}
+  #win .card .sec-t{margin-bottom:2px}
+  .srow{display:flex;gap:10px;align-items:flex-start}
+  .srow .ck{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px}
+  .srow .ck.yes{background:#3E8E5E;color:#fff}
+  .srow .ck.no{border:2px solid var(--line);color:var(--soft)}
+  .srow b{font-size:14px;display:block}
+  .srow small{font-size:12px;color:var(--soft)}
+  .sumline{font-size:13px;font-weight:800;color:var(--blue)}
+  #win .contact{background:var(--yellow)}
+  #win .contact h4{font-size:17px;font-weight:800}
+  #win .contact p{font-size:14px;line-height:1.45;color:var(--ink);max-width:none}
+  #win .contact .who{font-weight:800;font-size:15px}
+  .savebar{width:100%;display:flex;flex-direction:column;gap:10px}
+  .btn.wa{background:#25D366;color:#0B2A14}
+  #win .savenote{font-size:12px;color:#9FB3D9;max-width:none}
+  #win .card .sec-t, #win .card .sumline{color:var(--blue);font-size:13px;max-width:none}
+  .btn.done-early{background:transparent;border:2px solid #B23A2B;color:#B23A2B;margin-top:14px}
+  #win .medal{width:210px;height:210px;border-radius:50%;background:var(--yellow);color:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 0 10px rgba(255,219,0,.25),0 0 0 22px rgba(255,219,0,.1);animation:pop .6s cubic-bezier(.2,1.6,.4,1) both .1s}
+  @keyframes pop{from{transform:scale(.4) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
+  #win .medal .m1{font-size:12px;font-weight:800;letter-spacing:2px}
+  #win .medal .m2{font-family:'Caveat','Brush Script MT',cursive;font-size:44px;line-height:.95}
+  #win .medal .m3{font-size:13px;font-weight:800;margin-top:4px}
+  #win h2{font-size:34px;font-weight:800;color:var(--yellow)}
+  #win p{font-size:16px;line-height:1.45;color:#DCE6F7;max-width:320px}
+  .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .confetti i{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+
+  <!-- START -->
+  <section class="screen on" id="start" aria-label="Mulai">
+    <svg class="sky" viewBox="0 0 460 800" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+      <circle cx="360" cy="90" r="44" fill="#FFDB00"/><circle cx="384" cy="78" r="42" fill="#0B1F4B"/>
+      <circle cx="60" cy="60" r="3" fill="#FFDB00"/><circle cx="250" cy="40" r="4" fill="#FFDB00"/>
+      <circle cx="420" cy="200" r="3" fill="#FFDB00"/><circle cx="40" cy="300" r="2.5" fill="#FFDB00"/>
+      <circle cx="300" cy="170" r="2" fill="#FFDB00"/>
+    </svg>
+    <div class="top">
+      <span class="eyebrow">IKEA ALAM SUTERA</span>
+      <h1>Sleepy<br>Quest</h1>
+      <p class="lead">Tidur nyenyak itu diperjuangkan. Jawab 10 soal, temukan karakter tidurmu, lalu berburu harta karunnya di toko.</p>
+      <div class="chars"><span>🔥 Si Gerah</span><span>💡 Si Silau</span><span>🦴 Si Pegal</span><span>🤧 Si Bersin</span><span>📱 Si Scroller</span><span>⏰ Si Snooze</span></div>
+    </div>
+    <div class="bottom">
+      <div class="sticky hand">Spill dong, kamu karakter yang mana?</div>
+      <button class="btn yellow" id="goBtn">Mulai kuis →</button>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="quiz" aria-label="Kuis">
+    <div class="qhead">
+      <button class="back" id="backBtn" aria-label="Soal sebelumnya">←</button>
+      <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+      <span class="count" id="count">1/10</span>
+    </div>
+    <h2 class="qtext" id="qText"></h2>
+    <p class="hint">Pilih semua yang cocok, boleh lebih dari satu.</p>
+    <div class="opts" id="opts"></div>
+    <div class="qfoot"><button class="btn primary" id="nextBtn" disabled>Lanjut</button></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="result" aria-label="Hasil">
+    <span class="eyebrow">HASIL KAMU</span>
+    <div class="rcard" id="rCard">
+      <span class="badge" id="rEmoji" aria-hidden="true"></span>
+      <p class="lbl">KAMU ADALAH</p>
+      <h2 id="rName"></h2>
+      <p class="mix" id="rMix"></p>
+      <p class="desc" id="rDesc"></p>
+    </div>
+    <p class="sec-t">ISI KAMARMU</p>
+    <div class="list" id="rList"></div>
+    <p class="note">Nama produk dan lokasinya hanya contoh di prototipe ini. Cek ketersediaan ke co-worker IKEA.</p>
+    <button class="btn yellow" id="questBtn">🗺️ Mulai Sleepy Quest</button>
+    <div class="row2"><button class="btn ghost" id="againBtn">Ulangi kuis</button><button class="btn ghost" id="shareBtn">Bagikan</button></div>
+  </section>
+
+  <!-- WIN -->
+  <section class="screen" id="win" aria-label="Tamat">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="medal" id="medal"><span class="m1">CERTIFIED</span><span class="m2">Sleeper</span><span class="m3" id="wChar"></span></div>
+    <h2 id="winTitle">Quest tamat! 🎉</h2>
+    <p id="winText">Kamu sudah memperjuangkan tidur nyenyakmu. Tunjukkan layar ini ke kasir untuk merayakannya.</p>
+    <div class="card" id="sumCard">
+      <p class="sec-t">ISI KAMARMU</p>
+      <div id="sumList" style="display:flex;flex-direction:column;gap:10px"></div>
+      <p class="sumline" id="sumLine"></p>
+    </div>
+    <div class="card contact">
+      <h4 id="cTitle"></h4>
+      <p class="who" id="cName"></p>
+      <p id="cRole"></p>
+      <p id="cLines"></p>
+    </div>
+    <div class="savebar">
+      <div class="row2"><button class="btn yellow" id="saveJpg">⬇ Simpan JPG</button><button class="btn yellow" id="savePdf">⬇ Simpan PDF</button></div>
+      <button class="btn wa" id="waBtn">💬 Chat untuk penawaran</button>
+      <p class="savenote" id="saveNote">Daftar tersimpan di HP-mu: karakter, barang yang sudah ditemukan, yang masih dibutuhkan, dan kontak kami.</p>
+    </div>
+    <p class="hand" style="font-size:30px;color:#FFDB00">Selamat tidur nyenyak!</p>
+    <button class="btn ghost" id="restartBtn" style="color:#fff;border-color:rgba(255,255,255,.35)">Main lagi</button>
+  </section>
+</main>
+
+<!-- MAP MODAL -->
+<div class="modal" id="mapModal" role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+  <div class="sheet">
+    <div class="shead"><h3 id="mapTitle">Peta Harta Karun</h3><button class="x" id="closeMap" aria-label="Tutup peta">✕</button></div>
+    <svg class="map" id="map" viewBox="0 0 400 300" role="img" aria-label="Peta rute harta karun di toko"></svg>
+    <div class="prog"><span id="progTxt">0/0</span><div class="bar"><i id="progFill" style="background:#B23A2B"></i></div></div>
+    <div class="tlist" id="tList"></div>
+    <button class="btn done-early" id="doneEarly">Selesai dulu, simpan daftarku</button>
+    <p class="disc">Denah ini ilustrasi. Ganti dengan peta asli IKEA Alam Sutera (#19_image_peta_quest).</p>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DATA: ubah bagian ini saja untuk mengganti soal, produk, lokasi.
+   Kode karakter: G=Gerah S=Silau P=Pegal B=Bersin C=Scroller Z=Snooze
+   ============================================================ */
+const CHARACTERS = {
+  G:{name:"Si Gerah", emoji:"🔥", color:"#FF9A55", desc:"Tidurmu sering kalah sama panas Jakarta. Tubuhmu butuh suasana yang lebih sejuk supaya bisa lelap."},
+  S:{name:"Si Silau", emoji:"💡", color:"#FFDB00", desc:"Cahaya dan suara dari luar gampang membangunkanmu. Kamarmu butuh lebih gelap dan tenang."},
+  P:{name:"Si Pegal", emoji:"🦴", color:"#B3A2FF", desc:"Badanmu bangun dalam keadaan capek. Posisi tidur dan bantalmu minta diperhatikan."},
+  B:{name:"Si Bersin", emoji:"🤧", color:"#6ED3AF", desc:"Debu, tungau, dan udara pengap mengganggu napasmu saat tidur."},
+  C:{name:"Si Scroller", emoji:"📱", color:"#FF9CC6", desc:"Layar dan pikiranmu masih nyala saat seharusnya istirahat. Kamu butuh ritual menuju tidur."},
+  Z:{name:"Si Snooze", emoji:"⏰", color:"#8EC5FF", desc:"Bangun pagi adalah pertarungan harianmu. Kamu butuh cara bangun yang lebih lembut tapi pasti."},
+  N:{name:"Si Nyenyak", emoji:"😴", color:"#E9F2FB", desc:"Tidurmu sudah cukup baik! Rawat terus dengan perlengkapan yang tepat."}
+};
+// zone = id area di peta (lihat ZONES)
+const PRODUCTS = {
+  G:[{ic:"🌬️",n:"Duvet sejuk",ex:"contoh: REXBEGONIA",zone:"bed"},{ic:"🧊",n:"Bantal dengan sisi dingin",ex:"contoh: bantal ergonomis cooling",zone:"bed"},{ic:"🌀",n:"Kipas angin",ex:"area elektronik",zone:"elek"}],
+  S:[{ic:"🌑",n:"Tirai block-out",ex:"contoh: BLÅHUVA / MAJGULL",zone:"home"},{ic:"🪟",n:"Roller blind block-out",ex:"contoh: FRIDANS",zone:"home"},{ic:"😶‍🌫️",n:"Masker mata",ex:"contoh: STJÄRNANEMON",zone:"home"}],
+  P:[{ic:"🛏️",n:"Bantal ergonomis",ex:"contoh: KLUBBSPORRE",zone:"bed"},{ic:"☁️",n:"Bantal tinggi untuk tidur miring",ex:"contoh: SKOGSFRÄKEN",zone:"bed"},{ic:"🫂",n:"Bantal badan / bantal kaki",ex:"tanyakan co-worker",zone:"bed"}],
+  B:[{ic:"🍃",n:"Air purifier",ex:"contoh: STARKVIND",zone:"elek"},{ic:"💧",n:"Pelindung kasur waterproof",ex:"contoh: GRUSNARV / SOTNÄTFJÄRIL",zone:"bed"},{ic:"📟",n:"Sensor kualitas udara",ex:"contoh: VINDRIKTNING",zone:"elek"}],
+  C:[{ic:"💡",n:"Lampu baca bercahaya hangat",ex:"contoh: DEJSA",zone:"light"},{ic:"⏰",n:"Jam alarm (HP tidur di luar kamar)",ex:"contoh: RÖDSTRÄFSE",zone:"deco"}],
+  Z:[{ic:"⏰",n:"Jam alarm",ex:"contoh: RÖDSTRÄFSE / KARRSÅNGARE",zone:"deco"},{ic:"🌅",n:"Lampu smart yang bisa dijadwalkan",ex:"area Lighting",zone:"light"}],
+  N:[{ic:"💧",n:"Pelindung kasur",ex:"contoh: GRUSNARV",zone:"bed"},{ic:"🛏️",n:"Bantal yang pas posisi tidurmu",ex:"cek panduan bantal",zone:"bed"},{ic:"🌑",n:"Tirai block-out",ex:"contoh: BLÅHUVA",zone:"home"}]
+};
+const QUESTIONS = [
+  {q:"Apa yang paling sering bikin kamu kebangun?", o:[["🥵","Gerah, keringetan",{G:2}],["🌞","Silau lampu atau matahari",{S:2}],["🔊","Suara berisik",{S:1}],["😣","Badan pegal",{P:2}],["🤧","Hidung mampet",{B:2}],["💭","Kepikiran kerjaan",{C:1}]]},
+  {q:"Posisi tidur favoritmu?", o:[["🙂","Telentang",{P:1}],["🫠","Miring",{P:1}],["😴","Tengkurap",{P:1}],["🫂","Peluk guling",{P:2}],["🔄","Gonta-ganti terus",{P:1,G:1}]]},
+  {q:"Bangun tidur, rasanya…", o:[["🦒","Leher kaku",{P:2}],["🧱","Punggung pegal",{P:2}],["🤧","Hidung mampet",{B:2}],["🥱","Masih ngantuk berat",{Z:2}],["💦","Basah keringat",{G:2}],["✨","Segar!",{}]]},
+  {q:"Kamarmu kalau malam…", o:[["🥵","Gerah dan pengap",{G:2,B:1}],["🌀","Harus pakai kipas",{G:1}],["❄️","Pakai AC tapi tetap gerah",{G:1}],["💧","Lembap",{B:2}],["😌","Adem dan nyaman",{}]]},
+  {q:"Sebelum tidur biasanya ngapain?", o:[["📱","Scroll HP",{C:2}],["📺","Nonton",{C:1}],["💻","Kerja atau belajar",{C:2}],["📖","Baca buku",{C:1}],["🛌","Langsung tidur",{}]]},
+  {q:"Kamarmu dekat dengan…", o:[["🛣️","Jalan raya",{S:1}],["🏮","Lampu jalan / jendela besar",{S:2}],["🗣️","Tetangga ramai",{S:1}],["🌳","Lingkungan tenang",{}]]},
+  {q:"Berapa lama sampai kamu tertidur?", o:[["⚡","Kurang dari 15 menit",{}],["⏳","15–30 menit",{C:1}],["🐢","Lebih dari 30 menit",{C:2}],["📱","Ketiduran sambil pegang HP",{C:1,Z:1}]]},
+  {q:"Umur kasur dan bantalmu?", o:[["🆕","Kurang dari 2 tahun",{}],["📅","2–5 tahun",{P:1}],["🦕","Lebih dari 5 tahun",{P:2,B:1}],["🤷","Nggak ingat",{P:1}]]},
+  {q:"Siapa yang suka “numpang” di kasurmu?", o:[["👶","Anak kecil",{B:2}],["🐱","Hewan peliharaan",{B:2}],["💑","Pasangan",{P:1}],["🍪","Camilan dan kopi",{B:1}],["🙋","Cuma aku",{}]]},
+  {q:"Kamu bangun pagi pakai apa?", o:[["📱","Alarm HP sekali bunyi",{}],["😵","Snooze berkali-kali",{Z:2}],["🙋‍♀️","Dibangunin orang",{Z:2}],["🌅","Cahaya matahari",{S:1}],["🐓","Bangun sendiri",{}]]}
+];
+// Area di peta (urut sesuai perjalanan toko). x,y = posisi di peta 400x300
+const ZONES = [
+  {id:"start",name:"Bedroom (Showroom)",x:58,y:62},
+  {id:"bed",name:"Bed textiles",x:150,y:120},
+  {id:"home",name:"Home textiles",x:250,y:80},
+  {id:"light",name:"Lighting",x:330,y:150},
+  {id:"deco",name:"Dekorasi",x:250,y:210},
+  {id:"elek",name:"Smart home & elektronik",x:140,y:235},
+  {id:"kasir",name:"Kasir",x:345,y:262}
+];
+const MAX_TREASURE = 5;
+// Kontak untuk penawaran lebih lanjut. ISI SEBELUM DIPAKAI.
+const CONTACT = {
+  title: "Mau penawaran lebih lanjut?",
+  name: "[Nama co-worker]",
+  role: "Bedroom & Sleep specialist · IKEA Alam Sutera",
+  wa: "",      // nomor WhatsApp format internasional tanpa +, contoh: 62812xxxxxxx
+  email: "",   // contoh: nama@ikea.co.id
+  note: "Sebutkan karakter tidurmu saat menghubungi kami."
+};
+
+/* ============================================================
+   APP
+   ============================================================ */
+const $ = (s) => document.querySelector(s);
+const track = (ev) => { try { if (window.clarity) window.clarity("event", ev); } catch (e) {} };
+const tag = (k, v) => { try { if (window.clarity) window.clarity("set", k, v); } catch (e) {} };
+
+let step = 0, answers = QUESTIONS.map(() => new Set()), result = null, treasures = [];
+
+function show(id){ document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); window.scrollTo(0,0); }
+
+function renderQ(){
+  const Q = QUESTIONS[step];
+  $("#qText").textContent = Q.q;
+  $("#count").textContent = (step + 1) + "/" + QUESTIONS.length;
+  $("#barFill").style.width = ((step + 1) / QUESTIONS.length * 100) + "%";
+  const box = $("#opts"); box.innerHTML = "";
+  Q.o.forEach((o, i) => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.type = "button";
+    b.setAttribute("aria-pressed", answers[step].has(i));
+    b.innerHTML = `<span class="e" aria-hidden="true">${o[0]}</span><span class="ot">${o[1]}</span>`;
+    b.onclick = () => { answers[step].has(i) ? answers[step].delete(i) : answers[step].add(i); b.setAttribute("aria-pressed", answers[step].has(i)); updateNext(); };
+    box.appendChild(b);
+  });
+  $("#nextBtn").textContent = step === QUESTIONS.length - 1 ? "Lihat hasilku ✨" : "Lanjut";
+  updateNext();
+}
+function updateNext(){ $("#nextBtn").disabled = answers[step].size === 0; }
+
+function score(){
+  const s = {G:0,S:0,P:0,B:0,C:0,Z:0};
+  QUESTIONS.forEach((Q, qi) => answers[qi].forEach(oi => { const pts = Q.o[oi][2]; for (const k in pts) s[k] += pts[k]; }));
+  const ranked = Object.entries(s).sort((a,b) => b[1] - a[1]);
+  if (ranked[0][1] === 0) return {main:"N", second:null};
+  const second = ranked[1][1] > 0 && ranked[1][1] >= ranked[0][1] * 0.5 ? ranked[1][0] : null;
+  return {main:ranked[0][0], second};
+}
+
+function renderResult(){
+  result = score();
+  const M = CHARACTERS[result.main];
+  $("#rCard").style.background = M.color;
+  $("#rEmoji").textContent = M.emoji;
+  $("#rName").textContent = M.name;
+  $("#rMix").textContent = result.second ? "+ sedikit " + CHARACTERS[result.second].name : "";
+  $("#rDesc").textContent = M.desc;
+  // gabungkan produk karakter utama + kedua, tanpa duplikat, maks MAX_TREASURE
+  const seen = new Set(); treasures = [];
+  [result.main, result.second].filter(Boolean).forEach(k => PRODUCTS[k].forEach(p => {
+    if (!seen.has(p.n) && treasures.length < MAX_TREASURE) { seen.add(p.n); treasures.push({...p, done:false}); }
+  }));
+  const zi = (z) => ZONES.findIndex(Z => Z.id === z);
+  treasures.sort((a,b) => zi(a.zone) - zi(b.zone));
+  $("#rList").innerHTML = treasures.map(p => `<div class="item"><span class="ic" aria-hidden="true">${p.ic}</span><div><b>${p.n}</b><small>${p.ex} · ${ZONES[zi(p.zone)].name}</small></div></div>`).join("");
+  tag("karakter", M.name);
+  track("kuis_selesai");
+}
+
+function drawMap(){
+  const used = [...new Set(treasures.map(t => t.zone))];
+  const route = ZONES.filter(z => z.id === "start" || z.id === "kasir" || used.includes(z.id));
+  const pts = route.map(z => `${z.x},${z.y}`).join(" ");
+  let svg = `
+    <defs><pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#E2CB98" stroke-width="1"/></pattern></defs>
+    <rect width="400" height="300" fill="url(#g)"/>
+    <path d="M20 30 Q60 10 110 28 T200 26 T300 30 T385 40 L388 120 Q370 170 390 220 L380 288 Q300 296 200 284 T20 290 Q8 220 22 160 T20 30Z" fill="#EFD9A6" stroke="#C9A86A" stroke-width="2"/>
+    <g font-family="Caveat, cursive" font-size="20" fill="#7A5A2A">
+      <text x="300" y="28">N ↑</text>
+    </g>
+    <polyline points="${pts}" fill="none" stroke="#B23A2B" stroke-width="3" stroke-dasharray="8 7" stroke-linecap="round"/>`;
+  ZONES.forEach(z => {
+    const active = route.includes(z);
+    svg += `<g opacity="${active ? 1 : .45}"><circle cx="${z.x}" cy="${z.y}" r="7" fill="${z.id==='start'?'#0058A3':z.id==='kasir'?'#3E8E5E':'#C9A86A'}"/>
+      <text x="${z.x}" y="${z.y - 13}" text-anchor="middle" font-family="Noto Sans, Verdana, sans-serif" font-size="11" font-weight="700" fill="#3A250B">${z.name}</text></g>`;
+  });
+  treasures.forEach((t, i) => {
+    const z = ZONES.find(Z => Z.id === t.zone);
+    const k = treasures.filter((u, j) => u.zone === t.zone && j < i).length;
+    const ang = (30 + k * 72) * Math.PI / 180, r = 26;
+    const x = z.x + Math.cos(ang) * r, y = z.y + 6 + Math.sin(ang) * r;
+    svg += t.done
+      ? `<g><circle cx="${x}" cy="${y}" r="10" fill="#3E8E5E"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" font-family="Noto Sans, Verdana, sans-serif">✓</text></g>`
+      : `<g><path d="M${x-7} ${y-7} L${x+7} ${y+7} M${x+7} ${y-7} L${x-7} ${y+7}" stroke="#B23A2B" stroke-width="4" stroke-linecap="round"/><circle cx="${x + 9}" cy="${y - 9}" r="7" fill="#B23A2B"/><text x="${x + 9}" y="${y - 5.5}" text-anchor="middle" font-size="10" font-weight="800" fill="#fff" font-family="Noto Sans, Verdana, sans-serif">${i + 1}</text></g>`;
+  });
+  $("#map").innerHTML = svg;
+}
+
+function renderTreasures(){
+  const done = treasures.filter(t => t.done).length;
+  $("#progTxt").textContent = done + "/" + treasures.length + " harta";
+  $("#progFill").style.width = (treasures.length ? done / treasures.length * 100 : 0) + "%";
+  $("#tList").innerHTML = treasures.map((t, i) => `
+    <div class="t ${t.done ? "done" : ""}"><span class="n">${t.done ? "✓" : i + 1}</span>
+      <div class="tx"><b>${t.n}</b><small>${ZONES.find(z => z.id === t.zone).name}</small></div>
+      <button class="got" data-i="${i}" aria-pressed="${t.done}">${t.done ? "Ketemu!" : "Tandai ketemu"}</button></div>`).join("");
+  document.querySelectorAll(".got").forEach(b => b.onclick = () => {
+    const t = treasures[+b.dataset.i]; t.done = !t.done;
+    if (t.done) track("harta_ketemu");
+    drawMap(); renderTreasures();
+    if (treasures.every(x => x.done)) setTimeout(() => finish(true), 450);
+  });
+}
+
+function openMap(){ drawMap(); renderTreasures(); $("#mapModal").classList.add("on"); track("quest_dibuka"); }
+function closeMap(){ $("#mapModal").classList.remove("on"); }
+
+function charLine(){ return CHARACTERS[result.main].name + (result.second ? " + sedikit " + CHARACTERS[result.second].name : ""); }
+function fillSummary(complete){
+  const done = treasures.filter(t => t.done).length;
+  $("#medal").style.display = complete ? "flex" : "none";
+  $("#winTitle").textContent = complete ? "Quest tamat! 🎉" : "Daftarmu siap disimpan";
+  $("#winText").textContent = complete ? "Kamu sudah memperjuangkan tidur nyenyakmu. Tunjukkan layar ini ke kasir untuk merayakannya." : charLine() + ". Simpan daftarnya, lanjutkan berburu kapan saja.";
+  $("#sumList").innerHTML = treasures.map(t => `<div class="srow"><span class="ck ${t.done ? "yes" : "no"}">${t.done ? "✓" : ""}</span><div><b>${t.n}</b><small>${t.done ? "Sudah ditemukan" : "Masih dibutuhkan"} · ${zoneName(t.zone)}</small></div></div>`).join("");
+  $("#sumLine").textContent = done + " dari " + treasures.length + " sudah ditemukan";
+  $("#cTitle").textContent = CONTACT.title;
+  $("#cName").textContent = CONTACT.name;
+  $("#cRole").textContent = CONTACT.role;
+  $("#cLines").innerHTML = [CONTACT.wa ? "WhatsApp: +" + CONTACT.wa : "WhatsApp: [isi nomor]", CONTACT.email ? "Email: " + CONTACT.email : "Email: [isi email]", CONTACT.note].map(x => x.replace(/</g,"&lt;")).join("<br>");
+}
+function finish(complete = true){
+  closeMap();
+  $("#wChar").textContent = CHARACTERS[result.main].name;
+  fillSummary(complete);
+  const c = $("#confetti"); c.innerHTML = "";
+  if (!complete) { show("win"); track("quest_dijeda"); return; }
+  const cols = ["#FFDB00","#FF9A55","#B3A2FF","#6ED3AF","#FF9CC6","#8EC5FF"];
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement("i");
+    p.style.left = Math.random() * 100 + "%";
+    p.style.background = cols[i % cols.length];
+    p.style.animationDuration = (2.2 + Math.random() * 2) + "s";
+    p.style.animationDelay = (Math.random() * .8) + "s";
+    c.appendChild(p);
+  }
+  show("win"); track("quest_tamat");
+}
+
+function zoneName(id){ const z = ZONES.find(Z => Z.id === id); return z ? z.name : ""; }
+
+function download(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// Gambar kartu ringkasan ke <canvas> (dipakai untuk JPG dan PDF)
+async function drawCard(){
+  try { await document.fonts.ready; } catch (e) {}
+  const W = 1080, P = 72, F = "'Noto Sans', Verdana, sans-serif", H2 = "'Caveat', 'Brush Script MT', cursive";
+  const complete = treasures.length > 0 && treasures.every(t => t.done);
+  const done = treasures.filter(t => t.done).length;
+  const cv = document.createElement("canvas"); const ctx = cv.getContext("2d");
+  const wrap = (text, font, maxW) => { ctx.font = font; const words = String(text).split(" "); const lines = []; let line = "";
+    words.forEach(w => { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }); if (line) lines.push(line); return lines; };
+  // ---- ukur dulu
+  const rowW = W - P * 2 - 80;
+  const rows = treasures.map(t => ({ t, name: wrap(t.n, `800 38px ${F}`, rowW), sub: wrap(`${t.done ? "Sudah ditemukan" : "Masih dibutuhkan"} · ${zoneName(t.zone)} · ${t.ex}`, `400 27px ${F}`, rowW) }));
+  const rowsH = rows.reduce((h, r) => h + r.name.length * 48 + r.sub.length * 36 + 30, 0);
+  const cLines = [CONTACT.name, CONTACT.role, CONTACT.wa ? "WhatsApp: +" + CONTACT.wa : "WhatsApp: [isi nomor]", CONTACT.email ? "Email: " + CONTACT.email : "Email: [isi email]", CONTACT.note];
+  const cWrapped = cLines.map((l, i) => wrap(l, `${i === 0 ? 800 : 400} ${i === 0 ? 34 : 28}px ${F}`, W - P * 2 - 64));
+  const contactH = 60 + 52 + cWrapped.reduce((h, l, i) => h + l.length * (i === 0 ? 46 : 40), 0) + 44;
+  const headH = 400;
+  const H = headH + 70 + 50 + rowsH + 60 + contactH + 70 + 60;
+  cv.width = W; cv.height = H;
+  // ---- gambar
+  ctx.fillStyle = "#FAFBFD"; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#0B1F4B"; ctx.fillRect(0, 0, W, headH);
+  ctx.fillStyle = "#FFDB00"; ctx.beginPath(); ctx.arc(W - 150, 120, 62, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#0B1F4B"; ctx.beginPath(); ctx.arc(W - 118, 104, 60, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#FFDB00"; [[90,60,5],[520,50,6],[860,260,5],[700,140,4]].forEach(([x,y,r]) => { ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); });
+  ctx.fillStyle = "#FFDB00"; ctx.font = `800 28px ${F}`; ctx.fillText("SLEEPY QUEST  ·  IKEA ALAM SUTERA", P, 110);
+  ctx.font = `700 ${complete ? 120 : 96}px ${H2}`; ctx.fillText(complete ? "Certified Sleeper" : "Daftar Tidurku", P, 235);
+  ctx.fillStyle = "#FFFFFF"; ctx.font = `800 42px ${F}`;
+  wrap(charLine(), `800 42px ${F}`, W - P * 2).slice(0, 2).forEach((l, i) => ctx.fillText(l, P, 305 + i * 50));
+  ctx.fillStyle = "#9FB3D9"; ctx.font = `400 26px ${F}`;
+  ctx.fillText(new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }), P, headH - 30);
+  let y = headH + 80;
+  ctx.fillStyle = "#0058A3"; ctx.font = `800 28px ${F}`; ctx.fillText("ISI KAMARMU", P, y);
+  ctx.textAlign = "right"; ctx.fillText(`${done}/${treasures.length} DITEMUKAN`, W - P, y); ctx.textAlign = "left";
+  y += 40;
+  rows.forEach(r => {
+    const cy = y + 26;
+    if (r.t.done) { ctx.fillStyle = "#3E8E5E"; ctx.beginPath(); ctx.arc(P + 24, cy, 24, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(P + 13, cy); ctx.lineTo(P + 21, cy + 9); ctx.lineTo(P + 36, cy - 9); ctx.stroke(); }
+    else { ctx.strokeStyle = "#C9D6E6"; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(P + 24, cy, 22, 0, Math.PI * 2); ctx.stroke(); }
+    let ty = y + 38;
+    ctx.fillStyle = "#1B2233"; ctx.font = `800 38px ${F}`; r.name.forEach(l => { ctx.fillText(l, P + 80, ty); ty += 48; });
+    ctx.fillStyle = r.t.done ? "#3E8E5E" : "#4A5568"; ctx.font = `400 27px ${F}`; r.sub.forEach(l => { ctx.fillText(l, P + 80, ty - 6); ty += 36; });
+    y = ty + 30 - 36 + 6;
+    ctx.strokeStyle = "#E3EAF3"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(P, y - 14); ctx.lineTo(W - P, y - 14); ctx.stroke();
+    y += 0;
+  });
+  y += 40;
+  // kontak
+  ctx.fillStyle = "#FFDB00"; const r = 28, cx0 = P, cw = W - P * 2;
+  ctx.beginPath(); ctx.moveTo(cx0 + r, y); ctx.arcTo(cx0 + cw, y, cx0 + cw, y + contactH, r); ctx.arcTo(cx0 + cw, y + contactH, cx0, y + contactH, r); ctx.arcTo(cx0, y + contactH, cx0, y, r); ctx.arcTo(cx0, y, cx0 + cw, y, r); ctx.fill();
+  let cyy = y + 70;
+  ctx.fillStyle = "#0B1F4B"; ctx.font = `800 36px ${F}`; ctx.fillText(CONTACT.title, P + 32, cyy); cyy += 58;
+  cWrapped.forEach((ls, i) => { ctx.font = `${i === 0 ? 800 : 400} ${i === 0 ? 34 : 28}px ${F}`; ctx.fillStyle = "#1B2233"; ls.forEach(l => { ctx.fillText(l, P + 32, cyy); cyy += i === 0 ? 46 : 40; }); });
+  // footer
+  ctx.fillStyle = "#6B7689"; ctx.font = `400 22px ${F}`;
+  ctx.fillText("Nama produk, harga, dan ketersediaan dapat berubah. Cek ke co-worker IKEA.", P, H - 50);
+  return cv;
+}
+
+// Bungkus satu JPEG jadi file PDF satu halaman (tanpa library)
+function jpegToPdf(jpg, wPx, hPx){
+  const enc = new TextEncoder(); const parts = []; const offs = []; let len = 0;
+  const push = (x) => { const b = typeof x === "string" ? enc.encode(x) : x; parts.push(b); len += b.length; };
+  const W = 595.28, H = +(W * hPx / wPx).toFixed(2);
+  push("%PDF-1.4\n");
+  const obj = (n, body) => { offs[n] = len; push(`${n} 0 obj\n${body}\nendobj\n`); };
+  obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+  obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+  offs[4] = len;
+  push(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${wPx} /Height ${hPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`);
+  push(jpg); push("\nendstream\nendobj\n");
+  const content = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+  obj(5, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+  const xref = len;
+  let x = "xref\n0 6\n0000000000 65535 f \n";
+  for (let i = 1; i <= 5; i++) x += String(offs[i]).padStart(10, "0") + " 00000 n \n";
+  push(x + `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts, { type: "application/pdf" });
+}
+
+function reset(){ step = 0; answers = QUESTIONS.map(() => new Set()); treasures = []; result = null; show("start"); }
+
+$("#goBtn").onclick = () => { track("mulai"); step = 0; renderQ(); show("quiz"); };
+$("#backBtn").onclick = () => { if (step === 0) show("start"); else { step--; renderQ(); } };
+$("#nextBtn").onclick = () => {
+  track("soal_" + (step + 1));
+  if (step < QUESTIONS.length - 1) { step++; renderQ(); }
+  else { renderResult(); show("result"); }
+};
+$("#questBtn").onclick = openMap;
+$("#doneEarly").onclick = () => finish(treasures.length > 0 && treasures.every(t => t.done));
+$("#saveJpg").onclick = async () => { const cv = await drawCard(); cv.toBlob(b => download(b, "sleepy-quest-daftarku.jpg"), "image/jpeg", 0.92); track("simpan_jpg"); };
+$("#savePdf").onclick = async () => { const cv = await drawCard(); cv.toBlob(async b => { const pdf = jpegToPdf(new Uint8Array(await b.arrayBuffer()), cv.width, cv.height); download(pdf, "sleepy-quest-daftarku.pdf"); }, "image/jpeg", 0.92); track("simpan_pdf"); };
+$("#waBtn").onclick = () => {
+  if (!CONTACT.wa) { $("#saveNote").textContent = "Nomor WhatsApp belum diisi (lihat CONTACT di bagian DATA)."; return; }
+  const need = treasures.filter(t => !t.done).map(t => "- " + t.n).join("\n");
+  const got = treasures.filter(t => t.done).map(t => "- " + t.n).join("\n");
+  const msg = `Halo, saya ${charLine()} dari Sleepy Quest.\n\nSudah ketemu:\n${got || "-"}\n\nMasih dibutuhkan:\n${need || "-"}\n\nBoleh minta penawarannya?`;
+  window.open("https://wa.me/" + CONTACT.wa + "?text=" + encodeURIComponent(msg), "_blank");
+  track("kontak_wa");
+};
+$("#closeMap").onclick = closeMap;
+$("#mapModal").onclick = (e) => { if (e.target.id === "mapModal") closeMap(); };
+$("#againBtn").onclick = reset;
+$("#restartBtn").onclick = reset;
+$("#shareBtn").onclick = async () => {
+  const text = `Aku ${CHARACTERS[result.main].name} ${CHARACTERS[result.main].emoji} di Sleepy Quest IKEA Alam Sutera! Kamu karakter yang mana?`;
+  try { if (navigator.share) await navigator.share({ text, url: location.href }); else { await navigator.clipboard.writeText(text); $("#shareBtn").textContent = "Tersalin ✓"; } } catch (e) {}
+};
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeMap(); });
+</script>
+</body>
+</html>
